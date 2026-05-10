@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEET PG 2026 Dashboard</title>
+    <style>
+        :root {
+            --cream: #FFFDD0;
+            --elite-gold: #C5B358;
+            --medical-blue: #0077be;
+            --glass-bg: rgba(255, 253, 208, 0.7);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            overflow: hidden;
+        }
+
+        /* 50% Blurry Background */
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('https://images.unsplash.com/photo-1505751172107-573957a2482c?auto=format&fit=crop&q=80') no-repeat center center/cover;
+            filter: blur(8px);
+            opacity: 0.5;
+            z-index: -1;
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Header Styles */
+        header {
+            grid-column: span 2;
+            background: var(--glass-bg);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid var(--elite-gold);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            align-items: center;
+        }
+
+        .countdown-bar {
+            width: 80%;
+            background: #eee;
+            height: 25px;
+            border-radius: 12px;
+            margin-top: 10px;
+            position: relative;
+            border: 1px solid var(--elite-gold);
+        }
+
+        .bar-marker {
+            position: absolute;
+            font-size: 10px;
+            top: 25px;
+            transform: translateX(-50%);
+        }
+
+        /* Glass Box Styling */
+        .glass-box {
+            background: var(--glass-bg);
+            border-radius: 15px;
+            padding: 20px;
+            border: 1px solid var(--elite-gold);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .active-session {
+            background-color: var(--elite-gold);
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+
+        /* Break Overlays */
+        #break-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 253, 208, 0.95);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 2em;
+            color: var(--medical-blue);
+        }
+
+        footer {
+            grid-column: span 2;
+            text-align: right;
+            font-style: italic;
+            color: #555;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background"></div>
+
+    <div id="break-overlay">
+        <div id="break-message"></div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header>
+            <div class="header-top">
+                <h1>🩺 NEET PG 2026</h1>
+                <div id="digital-clock" style="font-size: 1.5em; font-weight: bold;">00:00:00</div>
+                <div id="days-left" style="color: brown; font-weight: bold;"></div>
+            </div>
+            <div class="countdown-bar">
+                <div id="progress-fill" style="height: 100%; background: var(--elite-gold); width: 60%; border-radius: 12px;"></div>
+                <span class="bar-marker" style="left: 0%;">100d</span>
+                <span class="bar-marker" style="left: 50%;">50d</span>
+                <span class="bar-marker" style="left: 90%;">10d</span>
+            </div>
+        </header>
+
+        <!-- Left Upper: Active Timer -->
+        <div class="glass-box">
+            <h3>📖 Active Session 🩺</h3>
+            <div id="current-session-info" style="font-size: 1.2em;">Loading session...</div>
+            <div id="session-timer" style="font-size: 3em; color: var(--medical-blue);">00:00</div>
+        </div>
+
+        <!-- Right Upper: Schedule -->
+        <div class="glass-box">
+            <h3>📅 Schedule</h3>
+            <table id="schedule-table">
+                <!-- Populated by JS -->
+            </table>
+        </div>
+
+        <!-- Left Lower: Daily Target -->
+        <div class="glass-box">
+            <h3>🎯 Daily Targets</h3>
+            <ul id="target-list" style="list-style: none; padding: 0;">
+                <!-- Populated by JS -->
+            </ul>
+        </div>
+
+        <!-- Footer: Motivation -->
+        <footer>
+            <div id="quote-box">"The expert in anything was once a beginner."</div>
+        </footer>
+    </div>
+
+    <script>
+        // CONFIGURATION: Replace with your Google Sheets CSV link
+        const SHEET_CSV_URL = 'YOUR_LINK_HERE'; 
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('digital-clock').innerText = now.toLocaleTimeString();
+            
+            // NEET PG Countdown (Assume May 16, 2026)
+            const examDate = new Date('May 16, 2026');
+            const diff = examDate - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('days-left').innerText = `${days} Days Left`;
+        }
+
+        const breakMessages = [
+            "Will be back to study soon!",
+            "Time to hydrate and stretch.",
+            "Rest your eyes, Doctor.",
+            "Refueling for the next round.",
+            "Deep breaths. You're doing great."
+        ];
+
+        function showBreak(isFullBreak) {
+            const overlay = document.getElementById('break-overlay');
+            const msg = document.getElementById('break-message');
+            if(isFullBreak) {
+                overlay.style.display = 'flex';
+                msg.innerText = breakMessages[Math.floor(Math.random() * breakMessages.length)];
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        // Initialize
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Sample Data Logic (To be replaced by fetch(SHEET_CSV_URL))
+        // This is where you would parse your spreadsheet data to highlight active sessions
+    </script>
+</body>
+</html>
